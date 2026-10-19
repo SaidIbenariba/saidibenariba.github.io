@@ -1,0 +1,62 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "*.qmd"
+    - "posts/**/*.qmd"
+    - "!README.md"
+
+website:
+  title: "Said Ibenariba"
+  description: "Notes on machine learning, speech & NLP, and doing research carefully."
+  site-url: https://saidibenariba.github.io
+  repo-url: https://github.com/SaidIbenariba/saidibenariba.github.io
+  favicon: assets/favicon.svg
+  open-graph: true
+  twitter-card: true
+  search: true
+  page-navigation: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: About
+      - href: blog.qmd
+        text: Blog
+      - href: projects.qmd
+        text: Projects
+      - href: publications.qmd
+        text: Publications
+      - href: cv.qmd
+        text: CV
+    right:
+      - icon: rss
+        href: blog.xml
+        aria-label: RSS
+      - icon: github
+        href: https://github.com/SaidIbenariba
+        aria-label: GitHub
+      - icon: briefcase
+        href: https://www.upwork.com/freelancers/~01940599324880c3de
+        aria-label: Upwork
+  page-footer:
+    left: "© 2026 Said Ibenariba · Content CC BY 4.0"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    # dark listed first = night is the default; the navbar toggle switches to day
+    theme:
+      dark: [darkly, assets/night.scss, assets/styles.scss]
+      light: [cosmo, assets/day.scss, assets/styles.scss]
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    highlight-style: github
+    html-math-method: katex
+    link-external-newwindow: true
+    smooth-scroll: true
+
+bibliography: references.bib
+citation-location: margin
+reference-location: margin

@@ -1,0 +1,26 @@
+---
+title: "Projects"
+toc: false
+---
+
+::: {.callout-note appearance="simple"}
+Each project links to a public repo. Work done for an employer is described at the
+**method** level only, with synthetic or public data.
+:::
+
+## Document AI (local, no cloud API)
+
+- **Private invoice AI** ([GitHub](https://github.com/SaidIbenariba/private-invoice-ai)): Invoices, scans and phone photos to validated data. Local vision-language model (Ollama), 9 business checks, Excel export, review screen.
+- **Order intake AI** ([GitHub](https://github.com/SaidIbenariba/order-intake-ai)): Customer order emails, PDFs and phone photos to ERP-ready orders. Every line matched to a catalog SKU, 0 wrong auto-matches on a held-out test.
+- **Contract Q&A AI** ([GitHub](https://github.com/SaidIbenariba/contract-qa-ai)): Answers with exact quotes and page citations. Local RAG (Docling + hybrid retrieval + Qwen2.5 on Ollama), tested on held-out CUAD contracts.
+
+## Machine learning
+
+- **Arabic hate speech detection** ([GitHub](https://github.com/SaidIbenariba/AraHateSpeech_Detection_Twitter_Master2)): Fine-tuned AraBERT and MorrBERT on Arabic tweets, with custom normalization and tokenization for dialectal variation.
+- **Skin cancer classification** ([GitHub](https://github.com/SaidIbenariba/Skin_Cancer_Classification)): CNN with transfer learning and targeted augmentation for class imbalance on dermatoscopic images.
+
+## Paper implementations
+
+| Paper | What I implemented | Code |
+|---|---|---|
+| *coming soon* | | |

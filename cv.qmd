@@ -1,0 +1,65 @@
+---
+title: "CV"
+toc: false
+---
+
+<!-- Put your PDF at assets/cv.pdf and uncomment the next line -->
+<!-- [Download CV (PDF)](assets/cv.pdf){.btn .btn-outline-primary} -->
+
+**Data Scientist & AI Engineer** · Rabat, Morocco ·
+[saidibenariba@gmail.com](mailto:saidibenariba@gmail.com) ·
+[github.com/SaidIbenariba](https://github.com/SaidIbenariba)
+
+I build and ship ML inference systems: vision-language models served with FastAPI and
+Docker on an air-gapped network, evaluated with precision/recall and latency benchmarks,
+and wired into operational data pipelines.
+
+## Experience
+
+**Founder & Full-Stack Developer**, illico.ma · *2026 – present* · Morocco
+
+Moroccan marketplace connecting clients with home-service professionals (artisans, suppliers).
+
+- Co-founded the platform and own IT end to end.
+- Build the web app in TypeScript with Next.js and Node.js.
+- Set up CI/CD with GitHub Actions and the AWS infrastructure (S3, CloudFront).
+
+**Data Engineer, final-year internship (PFE)**, Orange Business Morocco, Voice Team · *Mar 2026 – Aug 2026* · Rabat
+
+Template-free invoice validation system processing 1,000+ carrier formats.
+
+- Defined F1, precision/recall and latency benchmarks to separate real model signal from artefacts.
+- Built the data processing and quality-control pipelines that took a vision-language model from proof of concept to production.
+- Set up an active-learning loop in Label Studio to turn noisy production data into balanced evaluation sets.
+- Served models behind FastAPI, containerised with Docker, on an air-gapped network for strict data governance.
+
+*Stack: Python, Qwen2.5-VL, Mistral 7B, IBM Docling, Ollama, vLLM, pgvector, PostgreSQL, FastAPI, Label Studio, Docker.*
+
+## Education
+
+**Master's in Data Science & Engineering**, Mohammed V University, Rabat · *2024 – 2026*
+
+**Bachelor's in Computer Science**, Mohammed V University, Rabat · *2021 – 2024*
+
+## Selected projects
+
+Code and more on the [Projects](projects.qmd) page.
+
+- **Arabic hate speech detection:** fine-tuned AraBERT and MorrBERT on Arabic tweets, with custom normalization for dialectal variation.
+- **Skin cancer classification:** CNN with transfer learning and targeted augmentation for class imbalance on dermatoscopic images.
+- **Real-time gas monitoring:** ESP32 + HX711 IoT system with a time-series dashboard and anomaly forecasting.
+
+## Skills
+
+| | |
+|---|---|
+| **AI / ML** | Deep learning, PyTorch, TensorFlow, scikit-learn, Hugging Face, FAISS, NLP |
+| **LLM & document AI** | Qwen2.5-VL, Mistral 7B, Ollama, vLLM, IBM Docling, LangChain, Sentence Transformers |
+| **Big data** | PySpark, Hadoop, Hive, Kafka, HDFS, ETL pipelines |
+| **Data & viz** | Pandas, NumPy, Power BI, ArcGIS, Matplotlib, Seaborn |
+| **Engineering** | FastAPI, Flask, Docker, PostgreSQL + pgvector, Next.js, Node.js, React, AWS (S3, CloudFront), GitHub Actions |
+| **Programming** | Python, TypeScript, Java, R |
+
+## Languages
+
+Arabic (native) · French (fluent) · English (professional)

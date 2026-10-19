@@ -1,0 +1,25 @@
+/*-- scss:defaults --*/
+// Day: cool paper, indigo ink, Majorelle blue
+$body-bg: #EEF0F8;
+$body-color: #161B4A;
+$primary: #4C3FE0;
+$link-color: #4C3FE0;
+$headings-color: #161B4A;
+$border-color: #D3D6EA;
+$navbar-bg: #EEF0F8;
+$navbar-fg: #161B4A;
+$navbar-hl: #4C3FE0;
+$footer-bg: #EEF0F8;
+$code-color: #8A3FB0;
+$code-block-bg: #E3E6F3;
+
+/*-- scss:rules --*/
+:root {
+  --paper: #EEF0F8;
+  --ink: #161B4A;
+  --muted: #565C82;
+  --line: #D3D6EA;
+  --majorelle: #4C3FE0;
+  --saffron: #B8740F;
+  --teal: #12857A;
+}

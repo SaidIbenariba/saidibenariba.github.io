@@ -1,0 +1,12 @@
+# Where your Obsidian vault lives and which folder holds blog posts
+vault: ~/Obsidian
+publish_dir: 04_Publish
+
+# Used for the `url:` written back into notes with --mark-published
+site_url: https://saidibenariba.github.io
+
+# Tags that are workflow-only and should not become blog categories
+drop_tags: [blog, publish, draft, ready]
+
+# Optional: Zotero Better BibTeX auto-export file (Keep updated = on)
+# bibtex_source: ~/Zotero/exports/library.bib

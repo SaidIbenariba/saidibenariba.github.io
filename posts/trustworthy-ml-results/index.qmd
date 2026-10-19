@@ -1,0 +1,125 @@
+---
+title: Three habits that make ML results trustworthy
+description: 'Seeds, ablations and error analysis: what they are, why reviewers check
+  them, and how to do each in an afternoon.'
+date: '2026-10-19'
+categories:
+- research-methodology
+- machine-learning
+---
+
+::: {.callout-note title="TL;DR"}
+A better number is not a result. Run several **seeds** to show it isn't luck, **ablate** to show which part causes it, and do **error analysis** to show where it still fails.
+:::
+
+## The problem
+
+Your new model beats the baseline by one point. You ran it once. Is that a result?
+
+Not yet. One run can't tell you whether the gain is real, which part of your method produced it, or what the model still gets wrong. Reviewers ask those three questions almost every time, and three habits answer them. None of them needs a cluster or a new idea. Each fits in an afternoon.
+
+All examples below use a Darija speech recognition (ASR) setting, and **all numbers are illustrative**.
+
+## Habit 1: Seeds
+
+Training is full of randomness: initial weights, data shuffling, dropout, sometimes the train/test split. A **seed** fixes the starting point of that randomness. Same seed, same "random" choices, so the run is reproducible.
+
+```python
+import random, numpy as np, torch
+SEED = 42
+random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)  # if using GPU
+```
+
+Reproducible doesn't mean representative, though. A single seed can be lucky. So run 3 to 5 seeds and report **mean ± standard deviation**:
+
+| Model | Seed 1 | Seed 2 | Seed 3 | Report |
+|---|---|---|---|---|
+| Baseline | 80.1 | 79.5 | 80.4 | **80.0 ± 0.5** |
+| My method | 81.9 | 79.8 | 80.6 | **80.8 ± 1.1** |
+
+Compare best runs and you get 81.9 vs 80.4, a clear win. Compare across seeds and the gap (0.8) is smaller than the run-to-run spread (±1.1). The result is **not convincing**.
+
+**Do this:**
+
+- Seed every random number generator (Python, NumPy, PyTorch, CUDA).
+- Use the **same seeds** for the baseline and your method, and report them.
+- Never report only the best seed.
+- For stronger claims, add a confidence interval or a significance test.
+
+## Habit 2: Ablations
+
+The word comes from medicine: remove tissue to see what that part did. In ML, you **remove one component of your method at a time** and measure the drop. Without ablations you can say the whole method works, but not that each idea contributes.
+
+Say the Darija ASR method has three additions: (A) code-switching data augmentation, (B) a shared French–Arabic tokenizer, (C) a language-ID auxiliary loss.
+
+| Configuration | WER ↓ | Takeaway |
+|---|---|---|
+| Full method (A+B+C) | **18.2** | — |
+| − A (no augmentation) | 22.5 | A matters a lot (+4.3) |
+| − B (no shared tokenizer) | 18.9 | B helps a little |
+| − C (no language-ID loss) | 18.3 | C does ~nothing: drop it, or don't claim it |
+| Baseline (none) | 23.0 | — |
+
+The table turns "my model got a better number" into "**augmentation** is what improves results". It also tells you to stop claiming C.
+
+**Do this:**
+
+- Change **one thing at a time**, and keep everything else equal: data, tuning budget, seeds.
+- Map each ablation to **one claim** you want to make. Plan them before running.
+- Run ablations with multiple seeds. The 0.1 gap for C may be pure noise (see Habit 1).
+
+## Habit 3: Error analysis
+
+A metric is one number. It tells you *how much* the model fails, not *where* or *why*. Error analysis means reading the mistakes by hand.
+
+1. Take 100–200 wrong predictions from the **validation** set (never test).
+2. Read each one: input, prediction, true label.
+3. Tag each with a cause. Invent the categories as you read.
+4. Count, and fix the largest category that is actually fixable.
+
+Here is what 150 hand-read ASR errors might look like:
+
+| Error category | Count | % | What it suggests |
+|---|---|---|---|
+| Code-switched French word | 54 | 36% | Code-switching augmentation |
+| Background noise | 33 | 22% | Noise augmentation / denoising |
+| Named entities | 24 | 16% | Contextual biasing / lexicon |
+| Spelling variant of the same word | 21 | 14% | **Not a real error**: normalize before scoring |
+| Wrong reference label | 9 | 6% | Fix the dataset |
+| Other | 9 | 6% | — |
+
+Two lessons. The top category is your next experiment, and often a research hypothesis. And 20% of the "errors" are a **measurement problem** (spelling variants, bad labels), not a model problem.
+
+Then go from qualitative to quantitative with **slice analysis**: compute the metric separately per subgroup.
+
+| Slice | % of data | WER ↓ |
+|---|---|---|
+| Pure Darija | 60% | 14% |
+| Darija + French code-switching | 30% | 27% |
+| Noisy audio | 10% | 38% |
+| **Overall** | 100% | **~20%** |
+
+A 20% average looks fine. Code-switched speech is twice as bad, noisy audio nearly three times. That's where the real problem is.
+
+```python
+df.groupby("slice").apply(lambda g: metric(g.y_true, g.y_pred))
+```
+
+**Do this:**
+
+- Do it after every experiment, not just at the end.
+- Count, don't just look. "Many errors are noisy audio" is weak; "22% are noisy audio" is evidence.
+- Report slices for both baseline and method, and check that no slice got worse.
+
+## What to take away
+
+- **Seeds** show the gain isn't luck. Report mean ± std over 3–5 seeds, same seeds for every model.
+- **Ablations** show which part causes the gain. One component at a time, one claim per ablation.
+- **Error analysis and slices** show where the model still fails. That's usually where the next idea comes from.
+
+## Where this doesn't hold
+
+- Very large models where one run costs a fortune. Multiple seeds may be out of reach, so say so and widen your error bars in words.
+- Tiny slices give noisy numbers. Report slice size and a confidence interval, or merge slices.
+- Hand-reading errors doesn't scale to every experiment. Sample, and keep the categories consistent across runs.

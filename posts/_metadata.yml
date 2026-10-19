@@ -1,0 +1,11 @@
+# Applied to every post
+freeze: true
+author: "Said Ibenariba"
+title-block-banner: false
+citation: true
+license: "CC BY"
+comments: false
+# To enable comments later (GitHub Discussions):
+# comments:
+#   giscus:
+#     repo: SaidIbenariba/saidibenariba.github.io

@@ -1,0 +1,178 @@
+---
+pagetitle: "Said Ibenariba"
+description: "Data scientist and AI engineer in Rabat. I build ML systems that still work outside the notebook, and write about how to check that they do."
+listing:
+  id: recent-posts
+  contents: posts
+  sort: "date desc"
+  type: table
+  max-items: 5
+  fields: [date, title]
+  sort-ui: false
+  filter-ui: false
+toc: false
+---
+
+```{=html}
+<section class="hero" aria-labelledby="hero-name">
+  <figure class="cs-wave" id="cs-wave">
+    <svg viewBox="0 0 600 96" preserveAspectRatio="none" role="img"
+         aria-label="Waveform of a sentence that switches between Darija, French and English"></svg>
+    <figcaption>
+      <span class="cs-text" aria-live="polite"></span>
+      <span class="cs-row">
+        <span class="cs-legend"><span class="dar">Darija</span><span class="fr">French</span><span class="en">English</span></span>
+        <button type="button" class="cs-play">Transcribe</button>
+      </span>
+    </figcaption>
+  </figure>
+
+  <h1 id="hero-name">Said Ibenariba</h1>
+  <p class="hero-lede">I build ML systems that still work outside the notebook, and I write about how to check that they do.</p>
+  <p class="hero-meta">Data scientist and AI engineer in Rabat, Morocco.</p>
+  <nav class="hero-links" aria-label="Contact">
+    <a href="https://github.com/SaidIbenariba">GitHub</a>
+    <a href="https://www.upwork.com/freelancers/~01940599324880c3de">Upwork</a>
+    <a href="mailto:saidibenariba@gmail.com">Email</a>
+  </nav>
+</section>
+
+<script>
+// Waveform of a code-switched sentence. One bar per slot; each word gets slots
+// by length, silence between words. Seeded so it is the same on every load.
+// Pointer scrubs a playhead; "Transcribe" sweeps it and reveals words like live ASR.
+(function () {
+  const fig = document.getElementById("cs-wave");
+  const svg = fig && fig.querySelector("svg");
+  if (!svg) return;
+  const words = [["khdemt","dar"],["3la","dar"],["le","fr"],["modèle","fr"],["bzaf,","dar"],
+                 ["but","en"],["the","en"],["eval","en"],["was","en"],["lying.","en"]];
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let s = 42;
+  const rand = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const W = 600, H = 96, bar = 3, step = 5, gap = 2;
+  const total = Math.floor(W / step);
+  const letters = words.reduce((n, [w]) => n + w.length, 0);
+  const speech = total - gap * (words.length - 1);
+  const ns = "http://www.w3.org/2000/svg";
+
+  // Caption: one span per word so it can follow the playhead
+  const text = fig.querySelector(".cs-text");
+  const spans = words.map(([w, lang]) => {
+    const el = document.createElement("span");
+    el.className = "cs-word " + lang;
+    el.textContent = w;
+    text.append(el, " ");
+    return el;
+  });
+
+  const bars = [], span = words.map(() => [Infinity, -Infinity]);
+  let x = 0, i = 0;
+  words.forEach(([w, lang], k) => {
+    const n = Math.max(3, Math.round(speech * w.length / letters));
+    for (let j = 0; j < n && x < total; j++, x++, i++) {
+      const env = Math.sin(Math.PI * (j + 0.5) / n);        // word envelope
+      const syl = 0.6 + 0.4 * Math.abs(Math.sin(j * 1.7));  // syllable ripple
+      const h = Math.max(4, H * 0.8 * env * syl * (0.55 + 0.45 * rand()));
+      const r = document.createElementNS(ns, "rect");
+      r.setAttribute("x", x * step); r.setAttribute("y", (H - h) / 2);
+      r.setAttribute("width", bar); r.setAttribute("height", h);
+      r.setAttribute("rx", 1.5); r.setAttribute("class", lang);
+      r.style.setProperty("--i", i);
+      svg.appendChild(r);
+      bars.push({ r, cx: x * step + bar / 2, k });
+      span[k][0] = Math.min(span[k][0], x * step);
+      span[k][1] = Math.max(span[k][1], x * step + bar);
+    }
+    if (k < words.length - 1) x += gap;
+  });
+
+  const head = document.createElementNS(ns, "line");
+  head.setAttribute("class", "cs-head");
+  head.setAttribute("y1", 0); head.setAttribute("y2", H);
+  svg.appendChild(head);
+  fig.classList.add("is-drawing");
+
+  // Move the playhead to px (viewBox units). Bars near it lift; the word under it lights up.
+  let current = -1;
+  function seek(px, reveal) {
+    head.setAttribute("x1", px); head.setAttribute("x2", px);
+    for (const b of bars) {
+      const d = Math.abs(b.cx - px);
+      const lift = calm ? 1 : 1 + 0.45 * Math.max(0, 1 - d / 40) ** 2;
+      b.r.style.transform = `scaleY(${lift})`;
+      b.r.classList.toggle("is-past", b.cx <= px);
+    }
+    const k = span.findIndex(([a, b]) => px >= a - step && px <= b + step);
+    if (k !== current) {
+      spans.forEach((el, n) => el.classList.toggle("is-active", n === k));
+      current = k;
+    }
+    if (reveal) spans.forEach((el, n) => el.classList.toggle("is-heard", span[n][0] <= px));
+  }
+  function release() {
+    fig.classList.remove("is-scrubbing", "is-transcribing");
+    bars.forEach(b => { b.r.style.transform = ""; b.r.classList.remove("is-past"); });
+    spans.forEach(el => el.classList.remove("is-active", "is-heard"));
+    current = -1;
+  }
+  const toX = e => {
+    const box = svg.getBoundingClientRect();
+    return Math.min(W, Math.max(0, (e.clientX - box.left) / box.width * W));
+  };
+
+  svg.addEventListener("pointermove", e => {
+    if (fig.classList.contains("is-transcribing")) return;
+    fig.classList.add("is-scrubbing");
+    seek(toX(e), false);
+  });
+  svg.addEventListener("pointerleave", () => {
+    if (!fig.classList.contains("is-transcribing")) release();
+  });
+
+  const btn = fig.querySelector(".cs-play");
+  let raf = 0;
+  btn.addEventListener("click", () => {
+    cancelAnimationFrame(raf);
+    release();
+    fig.classList.add("is-scrubbing", "is-transcribing");
+    btn.disabled = true;
+    const t0 = performance.now(), dur = 3200;
+    const tick = now => {
+      const p = Math.min(1, (now - t0) / dur);
+      seek(p * W, true);
+      if (p < 1) { raf = requestAnimationFrame(tick); return; }
+      setTimeout(() => { release(); btn.disabled = false; btn.textContent = "Transcribe again"; }, 900);
+    };
+    raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+```
+
+## How I work
+
+::: {.principles}
+**I start from the constraint, not the model.** At Orange Business the network was air-gapped and the invoices came in 1,000+ carrier formats. Those two facts shaped the system more than any model benchmark did.
+
+**I don't trust a number I haven't broken down.** Several seeds, one ablation per claim, errors read by hand and counted by slice. If a gain disappears on the second run, it was never a gain. I [wrote about this](posts/trustworthy-ml-results/index.qmd).
+
+**The data pipeline matters more than the architecture.** On Arabic hate speech, normalization and tokenization for dialect mattered more than which BERT I fine-tuned. For low-resource languages, the preprocessing is the moat.
+
+**I ship.** I co-founded illico.ma and own its stack end to end, from the Next.js app to CI/CD on AWS. I also build local document AI (invoices, orders, contracts) that runs with no cloud API.
+
+**I think in three languages.** Darija, French and English, often in the same sentence. That's why code-switched speech is the research problem I want to work on.
+:::
+
+## Now
+
+Founder and full-stack developer at illico.ma. Before that, I spent six months taking a vision-language document validation system to production at Orange Business Morocco.
+
+**Research interests (exploring).** Speech and NLP for Moroccan Darija and code-switched French–Arabic–English, document understanding under constrained compute, and evaluation methodology.
+
+## Recent writing
+
+::: {#recent-posts}
+:::
+
+[All posts](blog.qmd)

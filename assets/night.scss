@@ -1,0 +1,25 @@
+/*-- scss:defaults --*/
+// Night: deep indigo sky, lifted Majorelle, saffron, teal
+$body-bg: #090D26;
+$body-color: #E4E6F6;
+$primary: #9A90FF;
+$link-color: #A49BFF;
+$headings-color: #F1F2FB;
+$border-color: #232A57;
+$navbar-bg: #090D26;
+$navbar-fg: #E4E6F6;
+$navbar-hl: #A49BFF;
+$footer-bg: #090D26;
+$code-color: #F0B451;
+$code-block-bg: #10163A;
+
+/*-- scss:rules --*/
+:root {
+  --paper: #090D26;
+  --ink: #E4E6F6;
+  --muted: #9AA0C6;
+  --line: #232A57;
+  --majorelle: #9A90FF;
+  --saffron: #F0B451;
+  --teal: #4FD1C0;
+}
