@@ -27,15 +27,20 @@ toc: false
     </figcaption>
   </figure>
 
-  <h1 id="hero-name">Said Ibenariba</h1>
-  <p class="hero-lede">I build ML systems that still work outside the notebook, and I write about how to check that they do.</p>
-  <p class="hero-meta">Data scientist and AI engineer in Rabat, Morocco.</p>
-  <nav class="hero-links" aria-label="Contact">
-    <a href="https://github.com/SaidIbenariba">GitHub</a>
-    <a href="https://www.linkedin.com/in/said-ibenariba-807b05289/">LinkedIn</a>
-    <a href="https://www.upwork.com/freelancers/~01940599324880c3de">Upwork</a>
-    <a href="mailto:saidibenariba@gmail.com">Email</a>
-  </nav>
+  <div class="hero-id">
+    <img class="hero-photo" src="assets/said.jpg" width="260" height="260" alt="Portrait of Said Ibenariba">
+    <div class="hero-text">
+      <div class="hero-name" id="hero-name" role="heading" aria-level="1">Said Ibenariba</div>
+      <p class="hero-lede">I build ML systems that still work outside the notebook, and I write about how to check that they do.</p>
+      <p class="hero-meta">Data scientist and AI engineer in Rabat, Morocco.</p>
+      <nav class="hero-links" aria-label="Contact">
+        <a href="https://github.com/SaidIbenariba">GitHub</a>
+        <a href="https://www.linkedin.com/in/said-ibenariba-807b05289/">LinkedIn</a>
+        <a href="https://www.upwork.com/freelancers/~01940599324880c3de">Upwork</a>
+        <a href="mailto:saidibenariba@gmail.com">Email</a>
+      </nav>
+    </div>
+  </div>
 </section>
 
 <script>
