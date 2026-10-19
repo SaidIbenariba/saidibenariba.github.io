@@ -8,7 +8,8 @@ toc: false
 
 **Data Scientist & AI Engineer** · Rabat, Morocco ·
 [saidibenariba@gmail.com](mailto:saidibenariba@gmail.com) ·
-[github.com/SaidIbenariba](https://github.com/SaidIbenariba)
+[github.com/SaidIbenariba](https://github.com/SaidIbenariba) ·
+[LinkedIn](https://www.linkedin.com/in/said-ibenariba-807b05289/)
 
 I build and ship ML inference systems: vision-language models served with FastAPI and
 Docker on an air-gapped network, evaluated with precision/recall and latency benchmarks,

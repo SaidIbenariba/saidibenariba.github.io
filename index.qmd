@@ -32,6 +32,7 @@ toc: false
   <p class="hero-meta">Data scientist and AI engineer in Rabat, Morocco.</p>
   <nav class="hero-links" aria-label="Contact">
     <a href="https://github.com/SaidIbenariba">GitHub</a>
+    <a href="https://www.linkedin.com/in/said-ibenariba-807b05289/">LinkedIn</a>
     <a href="https://www.upwork.com/freelancers/~01940599324880c3de">Upwork</a>
     <a href="mailto:saidibenariba@gmail.com">Email</a>
   </nav>

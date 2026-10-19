@@ -35,6 +35,9 @@ website:
       - icon: github
         href: https://github.com/SaidIbenariba
         aria-label: GitHub
+      - icon: linkedin
+        href: https://www.linkedin.com/in/said-ibenariba-807b05289/
+        aria-label: LinkedIn
       - icon: briefcase
         href: https://www.upwork.com/freelancers/~01940599324880c3de
         aria-label: Upwork
