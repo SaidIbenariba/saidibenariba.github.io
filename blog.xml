@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>Said Ibenariba</title>
+<link>https://saidibenariba.github.io/blog.html</link>
+<atom:link href="https://saidibenariba.github.io/blog.xml" rel="self" type="application/rss+xml"/>
+<description>Notes on machine learning, speech &amp; NLP, and doing research carefully.</description>
+<generator>quarto-1.10.19</generator>
+<lastBuildDate>Mon, 19 Oct 2026 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>Three habits that make ML results trustworthy</title>
+  <dc:creator>Said Ibenariba</dc:creator>
+  <link>https://saidibenariba.github.io/posts/trustworthy-ml-results/</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<div class="callout callout-style-default callout-note callout-titled" title="TL;DR">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>TL;DR
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A better number is not a result. Run several <strong>seeds</strong> to show it isn’t luck, <strong>ablate</strong> to show which part causes it, and do <strong>error analysis</strong> to show where it still fails.</p>
+</div>
+</div>
+<section id="the-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-problem">The problem</h2>
+<p>Your new model beats the baseline by one point. You ran it once. Is that a result?</p>
+<p>Not yet. One run can’t tell you whether the gain is real, which part of your method produced it, or what the model still gets wrong. Reviewers ask those three questions almost every time, and three habits answer them. None of them needs a cluster or a new idea. Each fits in an afternoon.</p>
+<p>All examples below use a Darija speech recognition (ASR) setting, and <strong>all numbers are illustrative</strong>.</p>
+</section>
+<section id="habit-1-seeds" class="level2">
+<h2 class="anchored" data-anchor-id="habit-1-seeds">Habit 1: Seeds</h2>
+<p>Training is full of randomness: initial weights, data shuffling, dropout, sometimes the train/test split. A <strong>seed</strong> fixes the starting point of that randomness. Same seed, same “random” choices, so the run is reproducible.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> random, numpy <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> np, torch</span>
+<span id="cb1-2">SEED <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">42</span></span>
+<span id="cb1-3">random.seed(SEED)<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span> np.random.seed(SEED)<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">;</span> torch.manual_seed(SEED)</span>
+<span id="cb1-4">torch.cuda.manual_seed_all(SEED)  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># if using GPU</span></span></code></pre></div></div>
+<p>Reproducible doesn’t mean representative, though. A single seed can be lucky. So run 3 to 5 seeds and report <strong>mean ± standard deviation</strong>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Seed 1</th>
+<th>Seed 2</th>
+<th>Seed 3</th>
+<th>Report</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Baseline</td>
+<td>80.1</td>
+<td>79.5</td>
+<td>80.4</td>
+<td><strong>80.0 ± 0.5</strong></td>
+</tr>
+<tr class="even">
+<td>My method</td>
+<td>81.9</td>
+<td>79.8</td>
+<td>80.6</td>
+<td><strong>80.8 ± 1.1</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Compare best runs and you get 81.9 vs 80.4, a clear win. Compare across seeds and the gap (0.8) is smaller than the run-to-run spread (±1.1). The result is <strong>not convincing</strong>.</p>
+<p><strong>Do this:</strong></p>
+<ul>
+<li>Seed every random number generator (Python, NumPy, PyTorch, CUDA).</li>
+<li>Use the <strong>same seeds</strong> for the baseline and your method, and report them.</li>
+<li>Never report only the best seed.</li>
+<li>For stronger claims, add a confidence interval or a significance test.</li>
+</ul>
+</section>
+<section id="habit-2-ablations" class="level2">
+<h2 class="anchored" data-anchor-id="habit-2-ablations">Habit 2: Ablations</h2>
+<p>The word comes from medicine: remove tissue to see what that part did. In ML, you <strong>remove one component of your method at a time</strong> and measure the drop. Without ablations you can say the whole method works, but not that each idea contributes.</p>
+<p>Say the Darija ASR method has three additions: (A) code-switching data augmentation, (B) a shared French–Arabic tokenizer, (C) a language-ID auxiliary loss.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Configuration</th>
+<th>WER ↓</th>
+<th>Takeaway</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Full method (A+B+C)</td>
+<td><strong>18.2</strong></td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>− A (no augmentation)</td>
+<td>22.5</td>
+<td>A matters a lot (+4.3)</td>
+</tr>
+<tr class="odd">
+<td>− B (no shared tokenizer)</td>
+<td>18.9</td>
+<td>B helps a little</td>
+</tr>
+<tr class="even">
+<td>− C (no language-ID loss)</td>
+<td>18.3</td>
+<td>C does ~nothing: drop it, or don’t claim it</td>
+</tr>
+<tr class="odd">
+<td>Baseline (none)</td>
+<td>23.0</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>The table turns “my model got a better number” into “<strong>augmentation</strong> is what improves results”. It also tells you to stop claiming C.</p>
+<p><strong>Do this:</strong></p>
+<ul>
+<li>Change <strong>one thing at a time</strong>, and keep everything else equal: data, tuning budget, seeds.</li>
+<li>Map each ablation to <strong>one claim</strong> you want to make. Plan them before running.</li>
+<li>Run ablations with multiple seeds. The 0.1 gap for C may be pure noise (see Habit 1).</li>
+</ul>
+</section>
+<section id="habit-3-error-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="habit-3-error-analysis">Habit 3: Error analysis</h2>
+<p>A metric is one number. It tells you <em>how much</em> the model fails, not <em>where</em> or <em>why</em>. Error analysis means reading the mistakes by hand.</p>
+<ol type="1">
+<li>Take 100–200 wrong predictions from the <strong>validation</strong> set (never test).</li>
+<li>Read each one: input, prediction, true label.</li>
+<li>Tag each with a cause. Invent the categories as you read.</li>
+<li>Count, and fix the largest category that is actually fixable.</li>
+</ol>
+<p>Here is what 150 hand-read ASR errors might look like:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Error category</th>
+<th>Count</th>
+<th>%</th>
+<th>What it suggests</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Code-switched French word</td>
+<td>54</td>
+<td>36%</td>
+<td>Code-switching augmentation</td>
+</tr>
+<tr class="even">
+<td>Background noise</td>
+<td>33</td>
+<td>22%</td>
+<td>Noise augmentation / denoising</td>
+</tr>
+<tr class="odd">
+<td>Named entities</td>
+<td>24</td>
+<td>16%</td>
+<td>Contextual biasing / lexicon</td>
+</tr>
+<tr class="even">
+<td>Spelling variant of the same word</td>
+<td>21</td>
+<td>14%</td>
+<td><strong>Not a real error</strong>: normalize before scoring</td>
+</tr>
+<tr class="odd">
+<td>Wrong reference label</td>
+<td>9</td>
+<td>6%</td>
+<td>Fix the dataset</td>
+</tr>
+<tr class="even">
+<td>Other</td>
+<td>9</td>
+<td>6%</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Two lessons. The top category is your next experiment, and often a research hypothesis. And 20% of the “errors” are a <strong>measurement problem</strong> (spelling variants, bad labels), not a model problem.</p>
+<p>Then go from qualitative to quantitative with <strong>slice analysis</strong>: compute the metric separately per subgroup.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Slice</th>
+<th>% of data</th>
+<th>WER ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pure Darija</td>
+<td>60%</td>
+<td>14%</td>
+</tr>
+<tr class="even">
+<td>Darija + French code-switching</td>
+<td>30%</td>
+<td>27%</td>
+</tr>
+<tr class="odd">
+<td>Noisy audio</td>
+<td>10%</td>
+<td>38%</td>
+</tr>
+<tr class="even">
+<td><strong>Overall</strong></td>
+<td>100%</td>
+<td><strong>~20%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A 20% average looks fine. Code-switched speech is twice as bad, noisy audio nearly three times. That’s where the real problem is.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1">df.groupby(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"slice"</span>).<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">apply</span>(<span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">lambda</span> g: metric(g.y_true, g.y_pred))</span></code></pre></div></div>
+<p><strong>Do this:</strong></p>
+<ul>
+<li>Do it after every experiment, not just at the end.</li>
+<li>Count, don’t just look. “Many errors are noisy audio” is weak; “22% are noisy audio” is evidence.</li>
+<li>Report slices for both baseline and method, and check that no slice got worse.</li>
+</ul>
+</section>
+<section id="what-to-take-away" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-take-away">What to take away</h2>
+<ul>
+<li><strong>Seeds</strong> show the gain isn’t luck. Report mean ± std over 3–5 seeds, same seeds for every model.</li>
+<li><strong>Ablations</strong> show which part causes the gain. One component at a time, one claim per ablation.</li>
+<li><strong>Error analysis and slices</strong> show where the model still fails. That’s usually where the next idea comes from.</li>
+</ul>
+</section>
+<section id="where-this-doesnt-hold" class="level2">
+<h2 class="anchored" data-anchor-id="where-this-doesnt-hold">Where this doesn’t hold</h2>
+<ul>
+<li>Very large models where one run costs a fortune. Multiple seeds may be out of reach, so say so and widen your error bars in words.</li>
+<li>Tiny slices give noisy numbers. Report slice size and a confidence interval, or merge slices.</li>
+<li>Hand-reading errors doesn’t scale to every experiment. Sample, and keep the categories consistent across runs.</li>
+</ul>
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{ibenariba2026,
+  author = {Ibenariba, Said},
+  title = {Three Habits That Make {ML} Results Trustworthy},
+  date = {2026-10-19},
+  url = {https://saidibenariba.github.io/posts/trustworthy-ml-results/},
+  langid = {en}
+}
+</code></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-ibenariba2026" class="csl-entry quarto-appendix-citeas">
+Ibenariba, Said. 2026. <span>“Three Habits That Make ML Results
+Trustworthy.”</span> October 19. <a href="https://saidibenariba.github.io/posts/trustworthy-ml-results/">https://saidibenariba.github.io/posts/trustworthy-ml-results/</a>.
+</div></div></section></div> ]]></description>
+  <category>research-methodology</category>
+  <category>machine-learning</category>
+  <guid>https://saidibenariba.github.io/posts/trustworthy-ml-results/</guid>
+  <pubDate>Mon, 19 Oct 2026 00:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>

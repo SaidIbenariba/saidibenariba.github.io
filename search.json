@@ -1,0 +1,163 @@
+[
+  {
+    "objectID": "publications.html",
+    "href": "publications.html",
+    "title": "Publications",
+    "section": "",
+    "text": "Workshop papers and preprints will be listed here."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html",
+    "href": "posts/trustworthy-ml-results/index.html",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "",
+    "text": "NoteTL;DR\n\n\n\nA better number is not a result. Run several seeds to show it isn’t luck, ablate to show which part causes it, and do error analysis to show where it still fails."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#the-problem",
+    "href": "posts/trustworthy-ml-results/index.html#the-problem",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "The problem",
+    "text": "The problem\nYour new model beats the baseline by one point. You ran it once. Is that a result?\nNot yet. One run can’t tell you whether the gain is real, which part of your method produced it, or what the model still gets wrong. Reviewers ask those three questions almost every time, and three habits answer them. None of them needs a cluster or a new idea. Each fits in an afternoon.\nAll examples below use a Darija speech recognition (ASR) setting, and all numbers are illustrative."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#habit-1-seeds",
+    "href": "posts/trustworthy-ml-results/index.html#habit-1-seeds",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "Habit 1: Seeds",
+    "text": "Habit 1: Seeds\nTraining is full of randomness: initial weights, data shuffling, dropout, sometimes the train/test split. A seed fixes the starting point of that randomness. Same seed, same “random” choices, so the run is reproducible.\nimport random, numpy as np, torch\nSEED = 42\nrandom.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)\ntorch.cuda.manual_seed_all(SEED)  # if using GPU\nReproducible doesn’t mean representative, though. A single seed can be lucky. So run 3 to 5 seeds and report mean ± standard deviation:\n\n\n\nModel\nSeed 1\nSeed 2\nSeed 3\nReport\n\n\n\n\nBaseline\n80.1\n79.5\n80.4\n80.0 ± 0.5\n\n\nMy method\n81.9\n79.8\n80.6\n80.8 ± 1.1\n\n\n\nCompare best runs and you get 81.9 vs 80.4, a clear win. Compare across seeds and the gap (0.8) is smaller than the run-to-run spread (±1.1). The result is not convincing.\nDo this:\n\nSeed every random number generator (Python, NumPy, PyTorch, CUDA).\nUse the same seeds for the baseline and your method, and report them.\nNever report only the best seed.\nFor stronger claims, add a confidence interval or a significance test."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#habit-2-ablations",
+    "href": "posts/trustworthy-ml-results/index.html#habit-2-ablations",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "Habit 2: Ablations",
+    "text": "Habit 2: Ablations\nThe word comes from medicine: remove tissue to see what that part did. In ML, you remove one component of your method at a time and measure the drop. Without ablations you can say the whole method works, but not that each idea contributes.\nSay the Darija ASR method has three additions: (A) code-switching data augmentation, (B) a shared French–Arabic tokenizer, (C) a language-ID auxiliary loss.\n\n\n\n\n\n\n\n\nConfiguration\nWER ↓\nTakeaway\n\n\n\n\nFull method (A+B+C)\n18.2\n—\n\n\n− A (no augmentation)\n22.5\nA matters a lot (+4.3)\n\n\n− B (no shared tokenizer)\n18.9\nB helps a little\n\n\n− C (no language-ID loss)\n18.3\nC does ~nothing: drop it, or don’t claim it\n\n\nBaseline (none)\n23.0\n—\n\n\n\nThe table turns “my model got a better number” into “augmentation is what improves results”. It also tells you to stop claiming C.\nDo this:\n\nChange one thing at a time, and keep everything else equal: data, tuning budget, seeds.\nMap each ablation to one claim you want to make. Plan them before running.\nRun ablations with multiple seeds. The 0.1 gap for C may be pure noise (see Habit 1)."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#habit-3-error-analysis",
+    "href": "posts/trustworthy-ml-results/index.html#habit-3-error-analysis",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "Habit 3: Error analysis",
+    "text": "Habit 3: Error analysis\nA metric is one number. It tells you how much the model fails, not where or why. Error analysis means reading the mistakes by hand.\n\nTake 100–200 wrong predictions from the validation set (never test).\nRead each one: input, prediction, true label.\nTag each with a cause. Invent the categories as you read.\nCount, and fix the largest category that is actually fixable.\n\nHere is what 150 hand-read ASR errors might look like:\n\n\n\n\n\n\n\n\n\nError category\nCount\n%\nWhat it suggests\n\n\n\n\nCode-switched French word\n54\n36%\nCode-switching augmentation\n\n\nBackground noise\n33\n22%\nNoise augmentation / denoising\n\n\nNamed entities\n24\n16%\nContextual biasing / lexicon\n\n\nSpelling variant of the same word\n21\n14%\nNot a real error: normalize before scoring\n\n\nWrong reference label\n9\n6%\nFix the dataset\n\n\nOther\n9\n6%\n—\n\n\n\nTwo lessons. The top category is your next experiment, and often a research hypothesis. And 20% of the “errors” are a measurement problem (spelling variants, bad labels), not a model problem.\nThen go from qualitative to quantitative with slice analysis: compute the metric separately per subgroup.\n\n\n\nSlice\n% of data\nWER ↓\n\n\n\n\nPure Darija\n60%\n14%\n\n\nDarija + French code-switching\n30%\n27%\n\n\nNoisy audio\n10%\n38%\n\n\nOverall\n100%\n~20%\n\n\n\nA 20% average looks fine. Code-switched speech is twice as bad, noisy audio nearly three times. That’s where the real problem is.\ndf.groupby(\"slice\").apply(lambda g: metric(g.y_true, g.y_pred))\nDo this:\n\nDo it after every experiment, not just at the end.\nCount, don’t just look. “Many errors are noisy audio” is weak; “22% are noisy audio” is evidence.\nReport slices for both baseline and method, and check that no slice got worse."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#what-to-take-away",
+    "href": "posts/trustworthy-ml-results/index.html#what-to-take-away",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "What to take away",
+    "text": "What to take away\n\nSeeds show the gain isn’t luck. Report mean ± std over 3–5 seeds, same seeds for every model.\nAblations show which part causes the gain. One component at a time, one claim per ablation.\nError analysis and slices show where the model still fails. That’s usually where the next idea comes from."
+  },
+  {
+    "objectID": "posts/trustworthy-ml-results/index.html#where-this-doesnt-hold",
+    "href": "posts/trustworthy-ml-results/index.html#where-this-doesnt-hold",
+    "title": "Three habits that make ML results trustworthy",
+    "section": "Where this doesn’t hold",
+    "text": "Where this doesn’t hold\n\nVery large models where one run costs a fortune. Multiple seeds may be out of reach, so say so and widen your error bars in words.\nTiny slices give noisy numbers. Report slice size and a confidence interval, or merge slices.\nHand-reading errors doesn’t scale to every experiment. Sample, and keep the categories consistent across runs."
+  },
+  {
+    "objectID": "cv.html",
+    "href": "cv.html",
+    "title": "CV",
+    "section": "",
+    "text": "Data Scientist & AI Engineer · Rabat, Morocco · saidibenariba@gmail.com · github.com/SaidIbenariba\nI build and ship ML inference systems: vision-language models served with FastAPI and Docker on an air-gapped network, evaluated with precision/recall and latency benchmarks, and wired into operational data pipelines."
+  },
+  {
+    "objectID": "cv.html#experience",
+    "href": "cv.html#experience",
+    "title": "CV",
+    "section": "Experience",
+    "text": "Experience\nFounder & Full-Stack Developer, illico.ma · 2026 – present · Morocco\nMoroccan marketplace connecting clients with home-service professionals (artisans, suppliers).\n\nCo-founded the platform and own IT end to end.\nBuild the web app in TypeScript with Next.js and Node.js.\nSet up CI/CD with GitHub Actions and the AWS infrastructure (S3, CloudFront).\n\nData Engineer, final-year internship (PFE), Orange Business Morocco, Voice Team · Mar 2026 – Aug 2026 · Rabat\nTemplate-free invoice validation system processing 1,000+ carrier formats.\n\nDefined F1, precision/recall and latency benchmarks to separate real model signal from artefacts.\nBuilt the data processing and quality-control pipelines that took a vision-language model from proof of concept to production.\nSet up an active-learning loop in Label Studio to turn noisy production data into balanced evaluation sets.\nServed models behind FastAPI, containerised with Docker, on an air-gapped network for strict data governance.\n\nStack: Python, Qwen2.5-VL, Mistral 7B, IBM Docling, Ollama, vLLM, pgvector, PostgreSQL, FastAPI, Label Studio, Docker."
+  },
+  {
+    "objectID": "cv.html#education",
+    "href": "cv.html#education",
+    "title": "CV",
+    "section": "Education",
+    "text": "Education\nMaster’s in Data Science & Engineering, Mohammed V University, Rabat · 2024 – 2026\nBachelor’s in Computer Science, Mohammed V University, Rabat · 2021 – 2024"
+  },
+  {
+    "objectID": "cv.html#selected-projects",
+    "href": "cv.html#selected-projects",
+    "title": "CV",
+    "section": "Selected projects",
+    "text": "Selected projects\nCode and more on the Projects page.\n\nArabic hate speech detection: fine-tuned AraBERT and MorrBERT on Arabic tweets, with custom normalization for dialectal variation.\nSkin cancer classification: CNN with transfer learning and targeted augmentation for class imbalance on dermatoscopic images.\nReal-time gas monitoring: ESP32 + HX711 IoT system with a time-series dashboard and anomaly forecasting."
+  },
+  {
+    "objectID": "cv.html#skills",
+    "href": "cv.html#skills",
+    "title": "CV",
+    "section": "Skills",
+    "text": "Skills\n\n\n\n\n\n\n\nAI / ML\nDeep learning, PyTorch, TensorFlow, scikit-learn, Hugging Face, FAISS, NLP\n\n\nLLM & document AI\nQwen2.5-VL, Mistral 7B, Ollama, vLLM, IBM Docling, LangChain, Sentence Transformers\n\n\nBig data\nPySpark, Hadoop, Hive, Kafka, HDFS, ETL pipelines\n\n\nData & viz\nPandas, NumPy, Power BI, ArcGIS, Matplotlib, Seaborn\n\n\nEngineering\nFastAPI, Flask, Docker, PostgreSQL + pgvector, Next.js, Node.js, React, AWS (S3, CloudFront), GitHub Actions\n\n\nProgramming\nPython, TypeScript, Java, R"
+  },
+  {
+    "objectID": "cv.html#languages",
+    "href": "cv.html#languages",
+    "title": "CV",
+    "section": "Languages",
+    "text": "Languages\nArabic (native) · French (fluent) · English (professional)"
+  },
+  {
+    "objectID": "blog.html",
+    "href": "blog.html",
+    "title": "Blog",
+    "section": "",
+    "text": "Order By\n      Default\n      \n        Title\n      \n      \n        Date - Oldest\n      \n      \n        Date - Newest\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\nThree habits that make ML results trustworthy\n\n\n\nresearch-methodology\n\nmachine-learning\n\n\n\nSeeds, ablations and error analysis: what they are, why reviewers check them, and how to do each in an afternoon.\n\n\n\n\n\nOct 19, 2026\n\n5 min\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Said Ibenariba",
+    "section": "",
+    "text": "DarijaFrenchEnglish\n        Transcribe\n      \n    \n  \n\n  \n  I build ML systems that still work outside the notebook, and I write about how to check that they do.\n  Data scientist and AI engineer in Rabat, Morocco.\n  \n    GitHub\n    Upwork\n    Email"
+  },
+  {
+    "objectID": "index.html#how-i-work",
+    "href": "index.html#how-i-work",
+    "title": "Said Ibenariba",
+    "section": "How I work",
+    "text": "How I work\n\nI start from the constraint, not the model. At Orange Business the network was air-gapped and the invoices came in 1,000+ carrier formats. Those two facts shaped the system more than any model benchmark did.\nI don’t trust a number I haven’t broken down. Several seeds, one ablation per claim, errors read by hand and counted by slice. If a gain disappears on the second run, it was never a gain. I wrote about this.\nThe data pipeline matters more than the architecture. On Arabic hate speech, normalization and tokenization for dialect mattered more than which BERT I fine-tuned. For low-resource languages, the preprocessing is the moat.\nI ship. I co-founded illico.ma and own its stack end to end, from the Next.js app to CI/CD on AWS. I also build local document AI (invoices, orders, contracts) that runs with no cloud API.\nI think in three languages. Darija, French and English, often in the same sentence. That’s why code-switched speech is the research problem I want to work on."
+  },
+  {
+    "objectID": "index.html#now",
+    "href": "index.html#now",
+    "title": "Said Ibenariba",
+    "section": "Now",
+    "text": "Now\nFounder and full-stack developer at illico.ma. Before that, I spent six months taking a vision-language document validation system to production at Orange Business Morocco.\nResearch interests (exploring). Speech and NLP for Moroccan Darija and code-switched French–Arabic–English, document understanding under constrained compute, and evaluation methodology."
+  },
+  {
+    "objectID": "index.html#recent-writing",
+    "href": "index.html#recent-writing",
+    "title": "Said Ibenariba",
+    "section": "Recent writing",
+    "text": "Recent writing\n\n\n\n\n\n\nDate\n\n\n\nTitle\n\n\n\n\n\n\n\n\nOct 19, 2026\n\n\nThree habits that make ML results trustworthy\n\n\n\n\n\n\nNo matching items\n\nAll posts"
+  },
+  {
+    "objectID": "projects.html",
+    "href": "projects.html",
+    "title": "Projects",
+    "section": "",
+    "text": "Each project links to a public repo. Work done for an employer is described at the method level only, with synthetic or public data."
+  },
+  {
+    "objectID": "projects.html#document-ai-local-no-cloud-api",
+    "href": "projects.html#document-ai-local-no-cloud-api",
+    "title": "Projects",
+    "section": "Document AI (local, no cloud API)",
+    "text": "Document AI (local, no cloud API)\n\nPrivate invoice AI (GitHub): Invoices, scans and phone photos to validated data. Local vision-language model (Ollama), 9 business checks, Excel export, review screen.\nOrder intake AI (GitHub): Customer order emails, PDFs and phone photos to ERP-ready orders. Every line matched to a catalog SKU, 0 wrong auto-matches on a held-out test.\nContract Q&A AI (GitHub): Answers with exact quotes and page citations. Local RAG (Docling + hybrid retrieval + Qwen2.5 on Ollama), tested on held-out CUAD contracts."
+  },
+  {
+    "objectID": "projects.html#machine-learning",
+    "href": "projects.html#machine-learning",
+    "title": "Projects",
+    "section": "Machine learning",
+    "text": "Machine learning\n\nArabic hate speech detection (GitHub): Fine-tuned AraBERT and MorrBERT on Arabic tweets, with custom normalization and tokenization for dialectal variation.\nSkin cancer classification (GitHub): CNN with transfer learning and targeted augmentation for class imbalance on dermatoscopic images."
+  },
+  {
+    "objectID": "projects.html#paper-implementations",
+    "href": "projects.html#paper-implementations",
+    "title": "Projects",
+    "section": "Paper implementations",
+    "text": "Paper implementations\n\n\n\nPaper\nWhat I implemented\nCode\n\n\n\n\ncoming soon"
+  }
+]
